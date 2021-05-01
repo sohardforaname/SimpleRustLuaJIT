@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::borrow::Borrow;
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Eq, Hash)]
 pub struct Symbol {
     pub text: String,
 }
@@ -27,7 +27,7 @@ impl PartialEq<Symbol> for Symbol {
     }
 }
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Eq, Hash)]
 pub struct SymBolList {
     pub vec: Vec<Symbol>,
 }
@@ -52,7 +52,7 @@ impl SymBolList {
     }
 
     pub fn is_empty_str_symbol_list(&self) -> bool {
-        self.vec.len() == 1 && self.vec[0].eq(&Symbol::new(&"e".to_string()))
+        self.vec.len() == 1 && self.vec[0].eq(&Symbol::new(&"z".to_string()))
     }
 
     pub fn is_all_true_not_end_symbol(&self, status_map: &HashMap<Symbol, bool>) -> bool {
