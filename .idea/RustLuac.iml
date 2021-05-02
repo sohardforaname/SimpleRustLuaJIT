@@ -5,9 +5,13 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/syntax_proofer/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/syntax_proofer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ll_syntax_proofer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/syntax_gen/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/src/syntax_proofer/target" />
       <excludeFolder url="file://$MODULE_DIR$/syntax_proofer/target" />
+      <excludeFolder url="file://$MODULE_DIR$/src/syntax_gen/target" />
+      <excludeFolder url="file://$MODULE_DIR$/ll_syntax_proofer/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

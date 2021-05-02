@@ -1,5 +1,5 @@
 [package]
-name = "syntax_proofer"
+name = "ll_syntax_proofer"
 version = "0.1.0"
 authors = ["sohardforaname <organic_chemistry@foxmail.com>"]
 edition = "2018"
