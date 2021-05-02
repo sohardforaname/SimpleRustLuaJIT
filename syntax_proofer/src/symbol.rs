@@ -7,7 +7,7 @@ pub struct Symbol {
 }
 
 impl Symbol {
-    fn new(text: &String) -> Symbol {
+    pub fn new(text: &String) -> Symbol {
         Symbol { text: (*text).clone() }
     }
 
@@ -33,6 +33,10 @@ pub struct SymBolList {
 }
 
 impl SymBolList {
+    pub fn new() -> SymBolList {
+        SymBolList { vec: Vec::new() }
+    }
+
     pub fn is_contain_end_symbol(&self) -> bool {
         for sym in self.vec.iter() {
             if sym.is_end_symbol() {
