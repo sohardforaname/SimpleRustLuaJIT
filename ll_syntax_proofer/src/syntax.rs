@@ -19,6 +19,7 @@ impl Syntax {
     fn get_deleting_generator_group<F>(&self, f: F) -> SymbolList
         where F: Fn(&SymbolList) -> bool {
         let mut sym_list = SymbolList::new();
+        //TODO:f(generator) closure replace with f
         self.generators.iter().for_each(|sym| {
             if sym.1.iter().take_while(|generator| {
                 f(generator).not()
@@ -30,9 +31,10 @@ impl Syntax {
     }
 
     fn get_deleting_generator<F>(&self, f: F) -> HashMap<Symbol, HashSet<SymbolList>>
-        where F: Fn(&SymbolList) -> bool {
+        where F: FnMut(&&SymbolList) -> bool {
         let mut generator_map = HashMap::<Symbol, HashSet<SymbolList>>::new();
 
+        //TODO:f(generator) closure replace with f
         self.generators.iter().for_each(|sym| {
             sym.1.iter().filter(|generator| {
                 f(generator)
@@ -66,26 +68,30 @@ impl Syntax {
     }
 
     pub fn calc_empty(&mut self) {
-        self.get_deleting_generator_group(|generator: &SymbolList| { generator.is_empty_str_symbol_list() })
-            .vec.iter().for_each(|sym| {
+        self.get_deleting_generator_group(|generator: &SymbolList| {
+            generator.is_empty_str_symbol_list()
+        }).vec.iter().for_each(|sym| {
             self.delete_generator_group(sym);
         });
 
-        self.get_deleting_generator(|generator: &SymbolList| { generator.is_contain_end_symbol() })
-            .iter().for_each(|sym| {
+        self.get_deleting_generator(|generator: &SymbolList| {
+            generator.is_contain_end_symbol()
+        }).iter().for_each(|sym| {
             self.delete_generator(sym);
         });
 
         let mut len = -1i32;
         while self.empty_status_map.len() as i32 > len {
             len = self.empty_status_map.len() as i32;
-            self.get_deleting_generator_group(|generator: &SymbolList| { generator.is_all_true_not_end_symbol(&self.empty_status_map) })
-                .vec.iter().for_each(|sym| {
+            self.get_deleting_generator_group(|generator: &SymbolList| {
+                generator.is_all_true_not_end_symbol(&self.empty_status_map)
+            }).vec.iter().for_each(|sym| {
                 self.delete_generator_group(sym);
             });
 
-            self.get_deleting_generator(|generator: &SymbolList| { generator.is_contain_false_not_end_symbol(&self.empty_status_map) })
-                .iter().for_each(|sym| {
+            self.get_deleting_generator(|generator: &SymbolList| {
+                generator.is_contain_false_not_end_symbol(&self.empty_status_map)
+            }).iter().for_each(|sym| {
                 self.delete_generator(sym);
             });
         }
