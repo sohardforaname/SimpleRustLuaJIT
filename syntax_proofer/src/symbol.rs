@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::borrow::Borrow;
+use std::fmt::{Display, Formatter, Result, Debug};
 
-#[derive(Clone, Eq, Hash)]
+#[derive(Clone, Eq, Hash, Debug)]
 pub struct Symbol {
     pub text: String,
 }
@@ -27,14 +28,36 @@ impl PartialEq<Symbol> for Symbol {
     }
 }
 
-#[derive(Clone, Eq, Hash)]
-pub struct SymBolList {
+impl From<String> for Symbol {
+    fn from(text: String) -> Symbol {
+        Symbol::new(&text)
+    }
+}
+
+impl From<&str> for Symbol {
+    fn from(text: &str) -> Symbol {
+        Symbol::new(text.to_string().borrow())
+    }
+}
+
+impl Display for Symbol {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "Symbol: {}", self.text)
+    }
+}
+
+#[derive(Clone, Eq, Hash, Debug)]
+pub struct SymbolList {
     pub vec: Vec<Symbol>,
 }
 
-impl SymBolList {
-    pub fn new() -> SymBolList {
-        SymBolList { vec: Vec::new() }
+impl SymbolList {
+    pub fn new() -> SymbolList {
+        SymbolList { vec: Vec::new() }
+    }
+
+    pub fn new_by_vec(vec: &Vec<Symbol>) -> SymbolList {
+        SymbolList { vec: vec.clone() }
     }
 
     pub fn is_contain_end_symbol(&self) -> bool {
@@ -86,8 +109,8 @@ impl SymBolList {
     }
 }
 
-impl PartialEq<SymBolList> for SymBolList {
-    fn eq(&self, sym_list: &SymBolList) -> bool {
+impl PartialEq<SymbolList> for SymbolList {
+    fn eq(&self, sym_list: &SymbolList) -> bool {
         self.vec.eq(&sym_list.vec)
     }
 }
