@@ -2,6 +2,8 @@ pub mod util;
 pub mod syntax;
 pub mod symbol;
 pub mod syntax_file_parser;
+mod calc_empty;
+mod calc_first;
 
 #[cfg(test)]
 mod tests {
@@ -19,8 +21,7 @@ mod tests {
             parser.add_syntax_line(line.unwrap_or_else(|_| { panic!("line error\n") }));
         }
         let mut syntax = Syntax::new(&parser.symbols, &parser.generators);
-        syntax.calc_empty_set();
-        syntax.calc_first_select();
+        syntax.calc_empty_set().calc_first_select();
 
         let i = 0;
     }
