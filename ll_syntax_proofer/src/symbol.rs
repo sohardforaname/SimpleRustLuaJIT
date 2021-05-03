@@ -79,7 +79,7 @@ impl SymbolList {
     }
 
     pub fn is_empty_str_symbol_list(&self) -> bool {
-        self.vec.len() == 1 && self.vec[0].eq(&Symbol::new(&"z".to_string()))
+        self.vec.len() == 1 && self.vec[0].eq(&Symbol::new(&"eps".to_string()))
     }
 
     pub fn is_all_true_not_end_symbol(&self, status_map: &HashMap<Symbol, bool>) -> bool {
@@ -98,7 +98,7 @@ impl SymbolList {
     pub fn is_contain_false_not_end_symbol(&self, status_map: &HashMap<Symbol, bool>) -> bool {
         for sym in self.vec.iter() {
             if sym.is_not_end_symbol() && if let Some(status) = status_map.get(sym) {
-                *status
+                !(*status)
             } else {
                 true
             } {
