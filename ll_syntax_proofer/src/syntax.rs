@@ -9,15 +9,20 @@ pub struct Syntax {
     pub generators: HashMap<Symbol, HashSet<SymbolList>>,
     pub empty_status_map: HashMap<Symbol, bool>,
     pub first_set_map: HashMap<Symbol, HashSet<Symbol>>,
+    pub follow_set_map: HashMap<Symbol, HashSet<Symbol>>,
 
-    pub(super) end_symbol: Symbol,
+    end_symbol: Symbol,
 }
 
 impl Syntax {
-    pub fn new(symbols: &HashSet<Symbol>, generators: &HashMap<Symbol, HashSet<SymbolList>>) -> Syntax {
+    pub fn new(
+        symbols: &HashSet<Symbol>,
+        generators: &HashMap<Symbol, HashSet<SymbolList>>,
+        root_symbol: &Symbol,
+    ) -> Syntax {
         let mut init_first_map = HashMap::<Symbol, HashSet<Symbol>>::new();
+        let mut init_follow_map = HashMap::<Symbol, HashSet<Symbol>>::new();
         symbols.iter().for_each(|sym| {
-
             //TODO: use into_iter to construct hash_set
             init_first_map.insert(sym.clone(), {
                 if sym.is_end_symbol() {
@@ -29,11 +34,18 @@ impl Syntax {
                 }
             });
         });
+        symbols.iter().for_each(|sym| {
+            init_follow_map.insert(sym.clone(), HashSet::new());
+        });
+        init_follow_map.get_mut(root_symbol).unwrap_or_else(|_| {
+            panic!("root symbol error\n")
+        }).insert(Symbol::from("##"));
         Syntax {
             symbols: symbols.clone(),
             generators: generators.clone(),
             empty_status_map: HashMap::new(),
             first_set_map: init_first_map,
+            follow_set_map: init_follow_map,
             end_symbol: Symbol::from("eps"),
         }
     }
@@ -94,7 +106,7 @@ impl Syntax {
         let copied_generator = self.generators.clone();
 
         self.get_deleting_generator_group(|generator: &SymbolList| {
-            generator.is_empty_str_symbol_list()
+            generator.is_empty_str_symbol_list(&self.end_symbol)
         }).vec.iter().for_each(|sym| {
             self.delete_generator_group(sym);
         });
@@ -172,6 +184,22 @@ impl Syntax {
                 if ori_first_set.len() < new_first_set.len() {
                     is_modified = true;
                     *ori_first_set = new_first_set;
+                }
+            }
+        }
+    }
+}
+
+impl Syntax {
+    fn calc_follow_set(&mut self) {
+        let mut is_modified = true;
+        while is_modified {
+            for sym in self.generators.iter() {
+                for generator in sym.1.iter() {
+                    for cur_sym in generator.vec.iter().rev() {
+                        let mut new_set: HashSet<Symbol> = HashSet::new();
+
+                    }
                 }
             }
         }

@@ -78,8 +78,8 @@ impl SymbolList {
         true
     }
 
-    pub fn is_empty_str_symbol_list(&self) -> bool {
-        self.vec.len() == 1 && self.vec[0].eq(&Symbol::new(&"eps".to_string()))
+    pub fn is_empty_str_symbol_list(&self, end_symbol: &Symbol) -> bool {
+        self.vec.len() == 1 && self.vec[0].eq(end_symbol)
     }
 
     pub fn is_all_true_not_end_symbol(&self, status_map: &HashMap<Symbol, bool>) -> bool {
