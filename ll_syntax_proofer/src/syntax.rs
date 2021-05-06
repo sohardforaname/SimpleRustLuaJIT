@@ -1,15 +1,15 @@
 use std::collections::{HashMap, HashSet};
-use crate::symbol::{SymbolList, Symbol};
-use std::ops::Not;
-use std::fmt::{Display, Formatter, Result};
+use crate::symbol::{Production, Symbol};
+use crate::util::calc_set_map_len;
 
 #[derive(Clone)]
 pub struct Syntax {
     pub symbols: HashSet<Symbol>,
-    pub generators: HashMap<Symbol, HashSet<SymbolList>>,
-    pub empty_status_map: HashMap<Symbol, bool>,
+    pub generators: HashMap<Symbol, HashSet<Production>>,
+    pub nullable_set: HashSet<Symbol>,
     pub first_set_map: HashMap<Symbol, HashSet<Symbol>>,
     pub follow_set_map: HashMap<Symbol, HashSet<Symbol>>,
+    pub select_set_map: HashMap<Production, HashSet<Symbol>>,
 
     end_symbol: Symbol,
 }
@@ -17,174 +17,97 @@ pub struct Syntax {
 impl Syntax {
     pub fn new(
         symbols: &HashSet<Symbol>,
-        generators: &HashMap<Symbol, HashSet<SymbolList>>,
-        root_symbol: &Symbol,
+        generators: &HashMap<Symbol, HashSet<Production>>,
     ) -> Syntax {
-        let mut init_first_map = HashMap::<Symbol, HashSet<Symbol>>::new();
-        let mut init_follow_map = HashMap::<Symbol, HashSet<Symbol>>::new();
-        symbols.iter().for_each(|sym| {
-            //TODO: use into_iter to construct hash_set
-            init_first_map.insert(sym.clone(), {
-                if sym.is_end_symbol() {
-                    let mut set = HashSet::<Symbol>::new();
-                    set.insert(sym.clone());
-                    set
-                } else {
-                    HashSet::new()
-                }
-            });
-        });
-        symbols.iter().for_each(|sym| {
-            init_follow_map.insert(sym.clone(), HashSet::new());
-        });
-        init_follow_map.get_mut(root_symbol).unwrap_or_else(|_| {
-            panic!("root symbol error\n")
-        }).insert(Symbol::from("##"));
         Syntax {
             symbols: symbols.clone(),
             generators: generators.clone(),
-            empty_status_map: HashMap::new(),
-            first_set_map: init_first_map,
-            follow_set_map: init_follow_map,
+            nullable_set: HashSet::new(),
+            first_set_map: {
+                let mut init_first_set_map = HashMap::new();
+                for symbol in symbols.iter() {
+                    if symbol.is_not_end_symbol() {
+                        init_first_set_map.insert(symbol.clone(), HashSet::new());
+                    }
+                }
+                init_first_set_map
+            },
+            follow_set_map: {
+                let mut init_follow_set_map = HashMap::new();
+                for symbol in symbols.iter() {
+                    if symbol.is_not_end_symbol() {
+                        init_follow_set_map.insert(symbol.clone(), HashSet::new());
+                    }
+                }
+                init_follow_set_map
+            },
+            select_set_map: {
+                let mut init_select_set_map = HashMap::new();
+                for productions in generators.iter() {
+                    for production in productions.1.iter() {
+                        init_select_set_map.insert(production.clone(), HashSet::new());
+                    }
+                }
+                init_select_set_map
+            },
             end_symbol: Symbol::from("eps"),
         }
     }
 }
 
 impl Syntax {
-    fn get_deleting_generator_group<F>(&self, f: F) -> SymbolList
-        where F: Fn(&SymbolList) -> bool {
-        let mut sym_list = SymbolList::new();
-
-        //TODO:f(generator) closure replace with f
-        self.generators.iter().for_each(|sym| {
-            if sym.1.iter().take_while(|generator| { f(generator).not() })
-                .count() < sym.1.len() {
-                sym_list.vec.push(sym.0.clone());
-            }
-        });
-        sym_list
-    }
-
-    fn get_deleting_generator<F>(&self, f: F) -> HashMap<Symbol, HashSet<SymbolList>>
-        where F: Fn(&SymbolList) -> bool {
-        let mut generator_map = HashMap::<Symbol, HashSet<SymbolList>>::new();
-
-        //TODO:f(generator) closure replace with f
-        self.generators.iter().for_each(|sym| {
-            sym.1.iter().filter(|generator| { f(generator) })
-                .for_each(|generator| {
-                    if let Some(set) = generator_map.get_mut(sym.0) {
-                        set.insert(generator.clone());
+    fn calc_empty_set(&mut self) {
+        loop {
+            let size = self.nullable_set.len();
+            for productions in self.generators.iter() {
+                for production in productions.1.iter() {
+                    if production.is_empty_production(&self.end_symbol) {
+                        self.nullable_set.insert(productions.0.clone());
                     } else {
-                        let mut generator_set = HashSet::new();
-                        generator_set.insert(generator.clone());
-                        generator_map.insert(sym.0.clone(), generator_set);
+                        let mut all_is_empty = true;
+                        for symbol in production.vec.iter() {
+                            if !self.nullable_set.contains(symbol) {
+                                all_is_empty = false;
+                                break;
+                            }
+                        }
+                        if all_is_empty {
+                            self.nullable_set.insert(productions.0.clone());
+                        }
                     }
-                });
-        });
-        generator_map
-    }
-
-    fn delete_generator_group(&mut self, sym: &Symbol) {
-        self.empty_status_map.insert(sym.clone(), true);
-        self.generators.remove(sym);
-    }
-
-    fn delete_generator(&mut self, sym: (&Symbol, &HashSet<SymbolList>)) {
-        sym.1.iter().for_each(|generator| {
-            let set = self.generators.get_mut(sym.0).unwrap();
-            set.remove(generator);
-            if set.len() == 0 {
-                self.empty_status_map.insert(sym.0.clone(), false);
-                self.generators.remove(sym.0);
+                }
             }
-        });
-    }
-
-    pub fn calc_empty_set(&mut self) {
-        let copied_generator = self.generators.clone();
-
-        self.get_deleting_generator_group(|generator: &SymbolList| {
-            generator.is_empty_str_symbol_list(&self.end_symbol)
-        }).vec.iter().for_each(|sym| {
-            self.delete_generator_group(sym);
-        });
-
-        self.get_deleting_generator(|generator: &SymbolList| {
-            generator.is_contain_end_symbol()
-        }).iter().for_each(|sym| {
-            self.delete_generator(sym);
-        });
-
-        let mut len = -1i32;
-        while self.empty_status_map.len() as i32 > len {
-            len = self.empty_status_map.len() as i32;
-            self.get_deleting_generator_group(|generator: &SymbolList| {
-                generator.is_all_true_not_end_symbol(&self.empty_status_map)
-            }).vec.iter().for_each(|sym| {
-                self.delete_generator_group(sym);
-            });
-
-            self.get_deleting_generator(|generator: &SymbolList| {
-                generator.is_contain_false_not_end_symbol(&self.empty_status_map)
-            }).iter().for_each(|sym| {
-                self.delete_generator(sym);
-            });
+            if size == self.nullable_set.len() {
+                break;
+            }
         }
-
-        self.generators = copied_generator;
     }
 }
 
 impl Syntax {
-    pub fn calc_first_set(&mut self) {
-        for dat in self.empty_status_map.iter() {
-            if *dat.1 {
-                self.first_set_map.get_mut(dat.0).unwrap().insert(
-                    self.end_symbol.clone()
-                );
-            }
-        }
-
-        for sym in self.generators.iter() {
-            for sym_vec in sym.1.iter() {
-                if sym_vec.vec[0].is_end_symbol() {
-                    self.first_set_map.get_mut(sym.0).unwrap()
-                        .insert(sym_vec.vec[0].clone());
-                }
-            }
-        }
-
-        let mut is_modified = true;
-        while is_modified {
-            is_modified = false;
-            for sym in self.generators.iter() {
-                let mut new_first_set = HashSet::<Symbol>::new();
-                let mut count = 0;
-                for sym_vec in sym.1.iter() {
-                    for cur_sym in sym_vec.vec.iter() {
-                        if cur_sym.is_not_end_symbol() {
-                            new_first_set = new_first_set.union(
-                                self.first_set_map.get(cur_sym).unwrap()
-                            ).cloned().collect();
-                            if !self.empty_status_map.get(cur_sym).unwrap() {
-                                break;
-                            }
-                            count += 1;
-                            continue;
+    fn calc_first_set(&mut self) {
+        loop {
+            let size = calc_set_map_len(&self.first_set_map);
+            for productions in self.generators.iter() {
+                for production in productions.1.iter() {
+                    let mut first_set = self.first_set_map.get(productions.0).unwrap().clone();
+                    for symbol in production.vec.iter() {
+                        if symbol.is_end_symbol() {
+                            first_set.insert(symbol.clone());
+                            break;
                         }
-                        break;
+                        first_set = first_set.union(self.first_set_map.get(symbol).unwrap())
+                            .cloned().collect::<HashSet<Symbol>>();
+                        if !self.nullable_set.contains(symbol) {
+                            break;
+                        }
                     }
+                    let old_first_set = self.first_set_map.get_mut(productions.0).unwrap();
+                    *old_first_set = first_set;
                 }
-                if count < sym.1.len() {
-                    new_first_set.remove(&self.end_symbol);
-                }
-                let ori_first_set = self.first_set_map.get_mut(sym.0).unwrap();
-                if ori_first_set.len() < new_first_set.len() {
-                    is_modified = true;
-                    *ori_first_set = new_first_set;
-                }
+            }
+            if size == calc_set_map_len(&self.first_set_map) {
+                break;
             }
         }
     }
@@ -192,16 +115,80 @@ impl Syntax {
 
 impl Syntax {
     fn calc_follow_set(&mut self) {
-        let mut is_modified = true;
-        while is_modified {
-            for sym in self.generators.iter() {
-                for generator in sym.1.iter() {
-                    for cur_sym in generator.vec.iter().rev() {
-                        let mut new_set: HashSet<Symbol> = HashSet::new();
-
+        loop {
+            let size = calc_set_map_len(&self.follow_set_map);
+            for productions in self.generators.iter() {
+                for production in productions.1.iter() {
+                    let mut suffix_follow_set = self.follow_set_map.get(productions.0)
+                        .unwrap().clone();
+                    for symbol in production.vec.iter().rev() {
+                        if symbol.is_end_symbol() {
+                            suffix_follow_set.clear();
+                            suffix_follow_set.insert(symbol.clone());
+                            continue;
+                        }
+                        let cur_follow_set = self.follow_set_map.get_mut(symbol)
+                            .unwrap();
+                        *cur_follow_set = cur_follow_set.union(&suffix_follow_set).cloned().collect();
+                        let cur_first_set = self.first_set_map.get(symbol).unwrap();
+                        if !self.nullable_set.contains(symbol) {
+                            suffix_follow_set = cur_first_set.clone();
+                            continue;
+                        }
+                        suffix_follow_set = suffix_follow_set.union(cur_first_set).cloned().collect();
                     }
                 }
             }
+            if size == calc_set_map_len(&self.follow_set_map) {
+                break;
+            }
         }
+    }
+}
+
+impl Syntax {
+    fn calc_select_set(&mut self) {
+        for productions in self.generators.iter() {
+            for production in productions.1.iter() {
+                let select_set = self.select_set_map.get_mut(production)
+                    .unwrap();
+                let mut is_all_empty_deduced = true;
+                for symbol in production.vec.iter() {
+                    if symbol.is_end_symbol() {
+                        select_set.insert(symbol.clone());
+                        is_all_empty_deduced = false;
+                        break;
+                    }
+                    *select_set = select_set.union(self.first_set_map.get(symbol).unwrap()).cloned().collect();
+                    if !self.nullable_set.contains(symbol) {
+                        is_all_empty_deduced = false;
+                        break;
+                    }
+                }
+                if is_all_empty_deduced {
+                    *select_set = select_set.union(self.follow_set_map.get(&production.head).unwrap())
+                        .cloned().collect();
+                }
+            }
+        }
+    }
+
+    pub fn check_if_ll(&mut self) -> bool {
+        self.calc_empty_set();
+        self.calc_first_set();
+        self.calc_follow_set();
+        self.calc_select_set();
+
+        for productions in self.generators.iter() {
+            let mut intersection = self.symbols.clone();
+            for production in productions.1.iter() {
+                intersection = intersection.union(self.select_set_map.get(production).unwrap())
+                    .cloned().collect();
+            }
+            if intersection.len() > 0 {
+                false;
+            }
+        }
+        true
     }
 }

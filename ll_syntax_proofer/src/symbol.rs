@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::borrow::Borrow;
 use std::fmt::{Display, Formatter, Result, Debug};
 
@@ -47,17 +46,14 @@ impl Display for Symbol {
 }
 
 #[derive(Clone, Eq, Hash, Debug)]
-pub struct SymbolList {
+pub struct Production {
+    pub head: Symbol,
     pub vec: Vec<Symbol>,
 }
 
-impl SymbolList {
-    pub fn new() -> SymbolList {
-        SymbolList { vec: Vec::new() }
-    }
-
-    pub fn new_by_vec(vec: &Vec<Symbol>) -> SymbolList {
-        SymbolList { vec: vec.clone() }
+impl Production {
+    pub fn new_by_vec(head_symbol: Symbol, vec: &Vec<Symbol>) -> Production {
+        Production { head: head_symbol, vec: vec.clone() }
     }
 
     pub fn is_contain_end_symbol(&self) -> bool {
@@ -78,39 +74,14 @@ impl SymbolList {
         true
     }
 
-    pub fn is_empty_str_symbol_list(&self, end_symbol: &Symbol) -> bool {
+    pub fn is_empty_production(&self, end_symbol: &Symbol) -> bool {
         self.vec.len() == 1 && self.vec[0].eq(end_symbol)
     }
 
-    pub fn is_all_true_not_end_symbol(&self, status_map: &HashMap<Symbol, bool>) -> bool {
-        for sym in self.vec.iter() {
-            if sym.is_not_end_symbol() && if let Some(status) = status_map.get(sym) {
-                !(*status)
-            } else {
-                true
-            } {
-                return false;
-            }
-        }
-        true
-    }
-
-    pub fn is_contain_false_not_end_symbol(&self, status_map: &HashMap<Symbol, bool>) -> bool {
-        for sym in self.vec.iter() {
-            if sym.is_not_end_symbol() && if let Some(status) = status_map.get(sym) {
-                !(*status)
-            } else {
-                true
-            } {
-                return true;
-            }
-        }
-        false
-    }
 }
 
-impl PartialEq<SymbolList> for SymbolList {
-    fn eq(&self, sym_list: &SymbolList) -> bool {
+impl PartialEq<Production> for Production {
+    fn eq(&self, sym_list: &Production) -> bool {
         self.vec.eq(&sym_list.vec)
     }
 }

@@ -1,9 +1,9 @@
-use crate::symbol::{Symbol, SymbolList};
+use crate::symbol::{Symbol, Production};
 use std::collections::{HashMap, HashSet};
 
 pub struct SyntaxParser {
     pub symbols: HashSet<Symbol>,
-    pub generators: HashMap<Symbol, HashSet<SymbolList>>,
+    pub generators: HashMap<Symbol, HashSet<Production>>,
 }
 
 impl SyntaxParser {
@@ -30,11 +30,11 @@ impl SyntaxParser {
         });
 
         if let Some(gen_set) = self.generators.get_mut(&Symbol::from(vec[0])) {
-            gen_set.insert(SymbolList::new_by_vec(&sym_vec));
+            gen_set.insert(Production::new_by_vec(Symbol::from(vec[0]), &sym_vec));
         } else {
             self.generators.insert(Symbol::from(vec[0]), {
-                let mut set = HashSet::<SymbolList>::new();
-                set.insert(SymbolList::new_by_vec(&sym_vec));
+                let mut set = HashSet::<Production>::new();
+                set.insert(Production::new_by_vec(Symbol::from(vec[0]), &sym_vec));
                 set
             });
         }

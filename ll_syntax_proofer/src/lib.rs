@@ -19,9 +19,6 @@ mod tests {
             parser.add_syntax_line(line.unwrap_or_else(|_| { panic!("line error\n") }));
         }
         let mut syntax = Syntax::new(&parser.symbols, &parser.generators);
-        syntax.calc_empty_set();
-        syntax.calc_first_set();
-
-        let i = 0;
+        println!("the grammar's ll(1) checker result: {}", syntax.check_if_ll());
     }
 }
