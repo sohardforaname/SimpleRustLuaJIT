@@ -20,5 +20,6 @@ mod tests {
         }
         let mut syntax = Syntax::new(&parser.symbols, &parser.generators);
         println!("the grammar's ll(1) checker result: {}", syntax.check_if_ll());
+        let table = syntax.build_analyze_table();
     }
 }

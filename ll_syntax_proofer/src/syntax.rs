@@ -12,6 +12,7 @@ pub struct Syntax {
     pub select_set_map: HashMap<Production, HashSet<Symbol>>,
 
     end_symbol: Symbol,
+    is_generated: bool,
 }
 
 impl Syntax {
@@ -51,6 +52,7 @@ impl Syntax {
                 init_select_set_map
             },
             end_symbol: Symbol::from("eps"),
+            is_generated: false,
         }
     }
 }
@@ -172,12 +174,20 @@ impl Syntax {
             }
         }
     }
+}
 
-    pub fn check_if_ll(&mut self) -> bool {
+impl Syntax {
+    pub fn generate_sets(&mut self) {
         self.calc_empty_set();
         self.calc_first_set();
         self.calc_follow_set();
         self.calc_select_set();
+    }
+
+    pub fn check_if_ll(&mut self) -> bool {
+        if !self.is_generated {
+            self.generate_sets();
+        }
 
         for productions in self.generators.iter() {
             let mut intersection = self.symbols.clone();
@@ -190,5 +200,21 @@ impl Syntax {
             }
         }
         true
+    }
+
+    pub fn build_analyze_table(&mut self) -> HashMap<(Symbol, Symbol), Production> {
+        if !self.is_generated {
+            self.generate_sets();
+        }
+
+        let mut trans_map = HashMap::new();
+
+        for select_item in self.select_set_map.iter() {
+            let head_sym = &select_item.0.head;
+            for symbol in select_item.1.iter() {
+                trans_map.insert((head_sym.clone(), symbol.clone()), select_item.0.clone());
+            }
+        }
+        trans_map
     }
 }

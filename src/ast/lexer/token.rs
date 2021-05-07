@@ -102,53 +102,53 @@ impl KeyWord {
 
     pub fn get_display_str(&self) -> String {
         match *self {
-            KeyWord::ADD    =>   "+".to_string(),
-            KeyWord::SUB    =>	 "-".to_string(),
-            KeyWord::MUL    =>	 "*".to_string(),
-            KeyWord::DIV    =>	 "/".to_string(),
-            KeyWord::MOD    =>	 "%".to_string(),
-            KeyWord::POW    =>	 "^".to_string(),
-            KeyWord::ASS    =>	 "=".to_string(),
-            KeyWord::EQU 	=>	 "==".to_string(),
-            KeyWord::NEQ 	=>	 "~=".to_string(),
-            KeyWord::GR 	=>	 ">".to_string(),
-            KeyWord::LE 	=>	 "<".to_string(),
-            KeyWord::GRE 	=>	 ">=".to_string(),
-            KeyWord::LEE 	=>	 "<=".to_string(),
-            KeyWord::CON 	=>	 "..".to_string(),
-            KeyWord::DOT 	=>	 ".".to_string(),
-            KeyWord::AND 	=>	 "and".to_string(),
-            KeyWord::OR 	=>	 "or".to_string(),
-            KeyWord::LEN 	=>	 "#".to_string(),
-            KeyWord::MIN 	=>	 "-".to_string(),
-            KeyWord::NOT 	=>	 "not".to_string(),
-            KeyWord::LSM 	=>	 "(".to_string(),
-            KeyWord::RSM 	=>	 ")".to_string(),
-            KeyWord::LMI 	=>	 "[".to_string(),
-            KeyWord::RMI 	=>	 "]".to_string(),
-            KeyWord::LLA 	=>	 "{".to_string(),
-            KeyWord::RLA 	=>	 "}".to_string(),
-            KeyWord::COM 	=>	 ",".to_string(),
-            KeyWord::SEM 	=>	 ";".to_string(),
+            KeyWord::ADD => "ADD".to_string(),
+            KeyWord::SUB => "SUB".to_string(),
+            KeyWord::MUL => "MUL".to_string(),
+            KeyWord::DIV => "DIV".to_string(),
+            KeyWord::MOD => "MOD".to_string(),
+            KeyWord::POW => "POW".to_string(),
+            KeyWord::ASS => "ASS".to_string(),
+            KeyWord::EQU => "EQU".to_string(),
+            KeyWord::NEQ => "NEQ".to_string(),
+            KeyWord::GR  => "GR".to_string(),
+            KeyWord::LE  => "LE".to_string(),
+            KeyWord::GRE => "GRE".to_string(),
+            KeyWord::LEE => "LEE".to_string(),
+            KeyWord::CON => "CON".to_string(),
+            KeyWord::DOT => "DOT".to_string(),
+            KeyWord::AND => "AND".to_string(),
+            KeyWord::OR  => "OR".to_string(),
+            KeyWord::LEN => "LEN".to_string(),
+            KeyWord::MIN => "MIN".to_string(),
+            KeyWord::NOT => "NOT".to_string(),
+            KeyWord::LSM => "LSM".to_string(),
+            KeyWord::RSM => "RSM".to_string(),
+            KeyWord::LMI => "LMI".to_string(),
+            KeyWord::RMI => "RMI".to_string(),
+            KeyWord::LLA => "LLA".to_string(),
+            KeyWord::RLA => "RLA".to_string(),
+            KeyWord::COM => "COM".to_string(),
+            KeyWord::SEM => "SEM".to_string(),
 
-            KeyWord::BRK 	=>	 "break".to_string(),
-            KeyWord::DO 	=>	 "do".to_string(),
-            KeyWord::ELS 	=>	 "else".to_string(),
-            KeyWord::ELI 	=>	 "elseif".to_string(),
-            KeyWord::END 	=>	 "end".to_string(),
-            KeyWord::FAL 	=>	 "false".to_string(),
-            KeyWord::FOR 	=>	 "for".to_string(),
-            KeyWord::FUN 	=>	 "function".to_string(),
-            KeyWord::IF 	=>	 "if".to_string(),
-            KeyWord::IN 	=>	 "in".to_string(),
-            KeyWord::LOC 	=>	 "local".to_string(),
-            KeyWord::NIL 	=>	 "nil".to_string(),
-            KeyWord::REP 	=>	 "repeat".to_string(),
-            KeyWord::RET 	=>	 "return".to_string(),
-            KeyWord::THE 	=>	 "then".to_string(),
-            KeyWord::TRU 	=>	 "true".to_string(),
-            KeyWord::UNT 	=>	 "until".to_string(),
-            KeyWord::WHI 	=>	 "while".to_string(),
+            KeyWord::BRK => "BRK".to_string(),
+            KeyWord::DO  => "DO".to_string(),
+            KeyWord::ELS => "ELS".to_string(),
+            KeyWord::ELI => "ELI".to_string(),
+            KeyWord::END => "END".to_string(),
+            KeyWord::FAL => "FAL".to_string(),
+            KeyWord::FOR => "FOR".to_string(),
+            KeyWord::FUN => "FUN".to_string(),
+            KeyWord::IF  => "IF".to_string(),
+            KeyWord::IN  => "IN".to_string(),
+            KeyWord::LOC => "LOC".to_string(),
+            KeyWord::NIL => "NIL".to_string(),
+            KeyWord::REP => "REP".to_string(),
+            KeyWord::RET => "RET".to_string(),
+            KeyWord::THE => "THE".to_string(),
+            KeyWord::TRU => "TRU".to_string(),
+            KeyWord::UNT => "UNT".to_string(),
+            KeyWord::WHI => "WHI".to_string(),
         }
     }
 }
@@ -178,10 +178,11 @@ impl From<KeyWord> for TokenType {
 impl Display for TokenType {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", match self {
-            TokenType::OptKeyWord(key_word) => key_word.get_display_str(),
-            TokenType::Number(num) => num.to_string(),
-            TokenType::String(str) | TokenType::ID(str) => str.clone(),
-            _ => "None".to_string()
+            TokenType::OptKeyWord(key_word) => "KEYWORD",
+            TokenType::Number(num) => "NUM",
+            TokenType::String(str) => "STR",
+            TokenType::ID(str) => "ID",
+            _ => "None"
         })
     }
 }
@@ -189,13 +190,14 @@ impl Display for TokenType {
 #[derive(Debug)]
 pub struct Token {
     pub token: TokenType,
+    pub raw_data: String,
     pub line: usize,
     pub column: usize,
 }
 
 impl Token {
-    pub fn new(token: TokenType, line: usize, column: usize) -> Token {
-        Token { token, line, column }
+    pub fn new(token: TokenType, raw_data: String, line: usize, column: usize) -> Token {
+        Token { token, raw_data, line, column }
     }
     pub fn get_id(&self) -> Option<&String> {
         match self.token {
@@ -221,6 +223,7 @@ impl Token {
     pub fn eof() -> Token {
         Token {
             token: TokenType::None,
+            raw_data: "".to_string(),
             line: 0,
             column: 0,
         }
@@ -241,7 +244,8 @@ impl Into<TokenType> for Token {
 
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "Token: {{type: \"{}\", line: {}, column: {}}}", self.token, self.line, self.column)
+        write!(f, "Token: {{type: {}, raw: {}, line: {}, column: {}}}",
+               self.token, self.raw_data, self.line, self.column)
     }
 }
 
