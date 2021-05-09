@@ -14,6 +14,7 @@ pub struct Lexer {
     key_word_hash_map: HashMap<String, KeyWord>,
     cur_line: usize,
     cur_column: usize,
+    eof: bool,
 }
 
 impl Lexer {
@@ -25,6 +26,7 @@ impl Lexer {
             key_word_hash_map: get_key_word_map(),
             cur_line: 1,
             cur_column: 1,
+            eof: false,
         }
     }
 
@@ -157,7 +159,14 @@ impl Lexer {
                 }
                 Some(Token::new(token_info.0, token_info.1, cur_line, cur_column))
             }
-            None => None
+            None => {
+                if !self.eof {
+                    self.eof = true;
+                    Some(Token::eof())
+                } else {
+                    None
+                }
+            }
         }
     }
 }

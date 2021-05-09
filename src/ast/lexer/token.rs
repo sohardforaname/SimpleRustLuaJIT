@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use crate::string_hash_map;
 use std::fmt::{Display, Formatter, Result, Debug};
+use ll_syntax_proofer::symbol::Symbol;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Hash)]
@@ -100,62 +101,62 @@ impl KeyWord {
         }
     }
 
-    pub fn get_display_str(&self) -> String {
+    pub fn get_display_str(&self) -> &'static str {
         match *self {
-            KeyWord::ADD => "ADD".to_string(),
-            KeyWord::SUB => "SUB".to_string(),
-            KeyWord::MUL => "MUL".to_string(),
-            KeyWord::DIV => "DIV".to_string(),
-            KeyWord::MOD => "MOD".to_string(),
-            KeyWord::POW => "POW".to_string(),
-            KeyWord::ASS => "ASS".to_string(),
-            KeyWord::EQU => "EQU".to_string(),
-            KeyWord::NEQ => "NEQ".to_string(),
-            KeyWord::GR  => "GR".to_string(),
-            KeyWord::LE  => "LE".to_string(),
-            KeyWord::GRE => "GRE".to_string(),
-            KeyWord::LEE => "LEE".to_string(),
-            KeyWord::CON => "CON".to_string(),
-            KeyWord::DOT => "DOT".to_string(),
-            KeyWord::AND => "AND".to_string(),
-            KeyWord::OR  => "OR".to_string(),
-            KeyWord::LEN => "LEN".to_string(),
-            KeyWord::MIN => "MIN".to_string(),
-            KeyWord::NOT => "NOT".to_string(),
-            KeyWord::LSM => "LSM".to_string(),
-            KeyWord::RSM => "RSM".to_string(),
-            KeyWord::LMI => "LMI".to_string(),
-            KeyWord::RMI => "RMI".to_string(),
-            KeyWord::LLA => "LLA".to_string(),
-            KeyWord::RLA => "RLA".to_string(),
-            KeyWord::COM => "COM".to_string(),
-            KeyWord::SEM => "SEM".to_string(),
+            KeyWord::ADD => "+",
+            KeyWord::SUB => "-",
+            KeyWord::MUL => "*",
+            KeyWord::DIV => "/",
+            KeyWord::MOD => "%",
+            KeyWord::POW => "^",
+            KeyWord::ASS => "=",
+            KeyWord::EQU => "==",
+            KeyWord::NEQ => "~=",
+            KeyWord::GR => ">",
+            KeyWord::LE => "<",
+            KeyWord::GRE => ">=",
+            KeyWord::LEE => "<=",
+            KeyWord::CON => "..",
+            KeyWord::DOT => ".",
+            KeyWord::AND => "and",
+            KeyWord::OR => "or",
+            KeyWord::LEN => "#",
+            KeyWord::MIN => "-",
+            KeyWord::NOT => "not",
+            KeyWord::LSM => "(",
+            KeyWord::RSM => ")",
+            KeyWord::LMI => "[",
+            KeyWord::RMI => "]",
+            KeyWord::LLA => "{",
+            KeyWord::RLA => "}",
+            KeyWord::COM => ",",
+            KeyWord::SEM => ";",
 
-            KeyWord::BRK => "BRK".to_string(),
-            KeyWord::DO  => "DO".to_string(),
-            KeyWord::ELS => "ELS".to_string(),
-            KeyWord::ELI => "ELI".to_string(),
-            KeyWord::END => "END".to_string(),
-            KeyWord::FAL => "FAL".to_string(),
-            KeyWord::FOR => "FOR".to_string(),
-            KeyWord::FUN => "FUN".to_string(),
-            KeyWord::IF  => "IF".to_string(),
-            KeyWord::IN  => "IN".to_string(),
-            KeyWord::LOC => "LOC".to_string(),
-            KeyWord::NIL => "NIL".to_string(),
-            KeyWord::REP => "REP".to_string(),
-            KeyWord::RET => "RET".to_string(),
-            KeyWord::THE => "THE".to_string(),
-            KeyWord::TRU => "TRU".to_string(),
-            KeyWord::UNT => "UNT".to_string(),
-            KeyWord::WHI => "WHI".to_string(),
+            KeyWord::BRK => "break",
+            KeyWord::DO => "do",
+            KeyWord::ELS => "else",
+            KeyWord::ELI => "elseif",
+            KeyWord::END => "end",
+            KeyWord::FAL => "false",
+            KeyWord::FOR => "for",
+            KeyWord::FUN => "function",
+            KeyWord::IF => "if",
+            KeyWord::IN => "in",
+            KeyWord::LOC => "local",
+            KeyWord::NIL => "nil",
+            KeyWord::REP => "repeat",
+            KeyWord::RET => "return",
+            KeyWord::THE => "then",
+            KeyWord::TRU => "true",
+            KeyWord::UNT => "until",
+            KeyWord::WHI => "while",
         }
     }
 }
 
 impl PartialEq<KeyWord> for KeyWord {
     fn eq(&self, key_word: &KeyWord) -> bool {
-        *key_word == self.clone()
+        *key_word == *self
     }
 }
 
@@ -166,7 +167,7 @@ pub enum TokenType {
     ID(String),
     String(String),
     Number(f64),
-    None,
+    EOF,
 }
 
 impl From<KeyWord> for TokenType {
@@ -175,54 +176,70 @@ impl From<KeyWord> for TokenType {
     }
 }
 
+impl TokenType {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            TokenType::OptKeyWord(key_word) => key_word.get_display_str(),
+            TokenType::Number(num) => "num",
+            TokenType::String(str) => "str",
+            TokenType::ID(str) => "id",
+            _ => "eof"
+        }
+    }
+}
+
 impl Display for TokenType {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "{}", match self {
-            TokenType::OptKeyWord(key_word) => "KEYWORD",
-            TokenType::Number(num) => "NUM",
-            TokenType::String(str) => "STR",
-            TokenType::ID(str) => "ID",
-            _ => "None"
-        })
+        write!(f, "{}", self.to_str())
+    }
+}
+
+impl From<TokenType> for String {
+    fn from(token_type: TokenType) -> String {
+        token_type.to_string()
     }
 }
 
 #[derive(Debug)]
 pub struct Token {
-    pub token: TokenType,
+    pub type_id: TokenType,
     pub raw_data: String,
     pub line: usize,
     pub column: usize,
 }
 
 impl Token {
-    pub fn new(token: TokenType, raw_data: String, line: usize, column: usize) -> Token {
-        Token { token, raw_data, line, column }
+    pub fn new(type_id: TokenType, raw_data: String, line: usize, column: usize) -> Token {
+        Token { type_id, raw_data, line, column }
     }
     pub fn get_id(&self) -> Option<&String> {
-        match self.token {
+        match self.type_id {
             TokenType::ID(ref id) => Some(id),
             _ => None
         }
     }
 
     pub fn get_num(&self) -> Option<&f64> {
-        match self.token {
+        match self.type_id {
             TokenType::Number(ref num) => Some(num),
             _ => None
         }
     }
 
     pub fn get_key_word(&self) -> Option<&KeyWord> {
-        match self.token {
+        match self.type_id {
             TokenType::OptKeyWord(ref key) => Some(key),
             _ => None
         }
     }
 
+    pub fn to_symbol(&self) -> Symbol {
+        Symbol { text: self.type_id.to_str().to_string() }
+    }
+
     pub fn eof() -> Token {
         Token {
-            token: TokenType::None,
+            type_id: TokenType::EOF,
             raw_data: "".to_string(),
             line: 0,
             column: 0,
@@ -232,20 +249,27 @@ impl Token {
 
 impl PartialEq<Token> for KeyWord {
     fn eq(&self, token: &Token) -> bool {
-        token.token == TokenType::from(self.clone())
+        token.type_id == TokenType::from(self.clone())
     }
 }
 
-impl Into<TokenType> for Token {
-    fn into(self) -> TokenType {
-        self.token.clone()
+impl PartialEq<Token> for Token {
+    fn eq(&self, token: &Token) -> bool {
+        token.raw_data == self.raw_data
+    }
+}
+
+
+impl PartialEq<Symbol> for Token {
+    fn eq(&self, symbol: &Symbol) -> bool {
+        self.type_id.to_str().eq(&symbol.text)
     }
 }
 
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "Token: {{type: {}, raw: {}, line: {}, column: {}}}",
-               self.token, self.raw_data, self.line, self.column)
+               self.type_id, self.raw_data, self.line, self.column)
     }
 }
 

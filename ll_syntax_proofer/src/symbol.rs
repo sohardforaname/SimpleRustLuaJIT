@@ -13,11 +13,15 @@ impl Symbol {
 
     pub fn is_end_symbol(&self) -> bool {
         let sym_char_vec: Vec<char> = self.text.chars().collect();
-        sym_char_vec[0].is_lowercase()
+        !sym_char_vec[0].is_uppercase()
     }
 
     pub fn is_not_end_symbol(&self) -> bool {
         !self.is_end_symbol()
+    }
+
+    pub fn is_empty_symbol(&self, empty_symbol: &Symbol) -> bool {
+        self.eq(&empty_symbol)
     }
 }
 
@@ -77,7 +81,6 @@ impl Production {
     pub fn is_empty_production(&self, end_symbol: &Symbol) -> bool {
         self.vec.len() == 1 && self.vec[0].eq(end_symbol)
     }
-
 }
 
 impl PartialEq<Production> for Production {

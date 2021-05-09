@@ -10,9 +10,9 @@ pub struct Syntax {
     pub first_set_map: HashMap<Symbol, HashSet<Symbol>>,
     pub follow_set_map: HashMap<Symbol, HashSet<Symbol>>,
     pub select_set_map: HashMap<Production, HashSet<Symbol>>,
-
-    end_symbol: Symbol,
-    is_generated: bool,
+    pub empty_symbol: Symbol,
+    pub eof_symbol: Symbol,
+    pub is_generated: bool,
 }
 
 impl Syntax {
@@ -20,16 +20,19 @@ impl Syntax {
         symbols: &HashSet<Symbol>,
         generators: &HashMap<Symbol, HashSet<Production>>,
     ) -> Syntax {
+        let mut extend_symbols = symbols.clone();
+        let init_empty_symbol = Symbol::from("eps");
+        let init_eof_symbol = Symbol::from("eof");
+        extend_symbols.insert(init_empty_symbol.clone());
+        extend_symbols.insert(init_eof_symbol.clone());
         Syntax {
-            symbols: symbols.clone(),
+            symbols: extend_symbols.clone(),
             generators: generators.clone(),
             nullable_set: HashSet::new(),
             first_set_map: {
                 let mut init_first_set_map = HashMap::new();
-                for symbol in symbols.iter() {
-                    if symbol.is_not_end_symbol() {
-                        init_first_set_map.insert(symbol.clone(), HashSet::new());
-                    }
+                for symbol in extend_symbols.iter() {
+                    init_first_set_map.insert(symbol.clone(), HashSet::new());
                 }
                 init_first_set_map
             },
@@ -51,7 +54,8 @@ impl Syntax {
                 }
                 init_select_set_map
             },
-            end_symbol: Symbol::from("eps"),
+            empty_symbol: init_empty_symbol,
+            eof_symbol: init_eof_symbol,
             is_generated: false,
         }
     }
@@ -63,7 +67,7 @@ impl Syntax {
             let size = self.nullable_set.len();
             for productions in self.generators.iter() {
                 for production in productions.1.iter() {
-                    if production.is_empty_production(&self.end_symbol) {
+                    if production.is_empty_production(&self.empty_symbol) {
                         self.nullable_set.insert(productions.0.clone());
                     } else {
                         let mut all_is_empty = true;
@@ -88,6 +92,11 @@ impl Syntax {
 
 impl Syntax {
     fn calc_first_set(&mut self) {
+        for symbol in self.symbols.iter() {
+            if symbol.is_end_symbol() {
+                self.first_set_map.get_mut(symbol).unwrap().insert(symbol.clone());
+            }
+        }
         loop {
             let size = calc_set_map_len(&self.first_set_map);
             for productions in self.generators.iter() {
@@ -117,6 +126,8 @@ impl Syntax {
 
 impl Syntax {
     fn calc_follow_set(&mut self) {
+        self.follow_set_map.get_mut(&Symbol::from("S")).unwrap()
+            .insert(self.eof_symbol.clone());
         loop {
             let size = calc_set_map_len(&self.follow_set_map);
             for productions in self.generators.iter() {
@@ -144,6 +155,9 @@ impl Syntax {
             if size == calc_set_map_len(&self.follow_set_map) {
                 break;
             }
+        }
+        for set in self.follow_set_map.iter_mut() {
+            set.1.remove(&self.empty_symbol);
         }
     }
 }
