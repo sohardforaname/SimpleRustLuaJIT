@@ -19,7 +19,7 @@ impl AnalyzeTable {
             parser.add_syntax_line(line.unwrap_or_else(|_| { panic!("line error\n") }));
         }
         let mut syntax = Syntax::new(&parser.symbols, &parser.generators);
-        if !syntax.check_if_ll() {
+        if syntax.check_if_ll().is_err() {
             panic!("Not LL(1) grammar");
         }
         AnalyzeTable {

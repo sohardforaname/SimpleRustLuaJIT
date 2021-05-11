@@ -19,8 +19,18 @@ mod tests {
             parser.add_syntax_line(line.unwrap_or_else(|_| { panic!("line error\n") }));
         }
         let mut syntax = Syntax::new(&parser.symbols, &parser.generators);
-        println!("the grammar's ll(1) checker result: {}", syntax.check_if_ll());
-
-        let table = syntax.build_analyze_table();
+        match syntax.check_if_ll() {
+            Ok(status) => {
+                println!("the LL(1) checker result of the grammar: true");
+                let table = syntax.build_analyze_table();
+            }
+            Err(set) => {
+                println!("the LL(1) checker result of the grammar: false. failed symbol:");
+                for symbol in set.iter() {
+                    print!("{} ", symbol);
+                }
+                print!("\n");
+            }
+        }
     }
 }

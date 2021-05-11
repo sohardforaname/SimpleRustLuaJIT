@@ -14,9 +14,10 @@ impl Symbol {
     pub fn is_end_symbol(&self) -> bool {
         if self.is_empty_symbol() {
             false
+        } else if self.is_not_end_symbol() {
+            false
         } else {
-            let sym_char_vec: Vec<char> = self.text.chars().collect();
-            sym_char_vec[0].is_lowercase()
+            true
         }
     }
 
@@ -58,7 +59,7 @@ impl From<&str> for Symbol {
 
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "Symbol: {}", self.text)
+        write!(f, "{}", self.text)
     }
 }
 

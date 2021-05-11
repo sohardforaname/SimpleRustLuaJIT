@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use crate::symbol::{Production, Symbol};
 use crate::util::calc_set_map_len;
-use std::process::exit;
+use std::path::Path;
+use std::fs::File;
 
 #[derive(Clone)]
 pub struct Syntax {
@@ -198,23 +199,36 @@ impl Syntax {
         self.calc_select_set();
     }
 
-    pub fn check_if_ll(&mut self) -> bool {
+    pub fn check_if_ll(&mut self) -> Result<bool, HashSet<Symbol>> {
         if !self.is_generated {
             self.generate_sets();
         }
-        self.verbose();
+        //
+        self.verbose_select();
+        let mut intersection_set = HashSet::new();
 
         for productions in self.generators.iter() {
-            let mut intersection = self.symbols.clone();
-            for production in productions.1.iter() {
-                intersection = intersection.intersection(self.select_set_map.get(production).unwrap())
-                    .cloned().collect();
-            }
-            if intersection.len() > 0 {
-                return false;
+            if productions.1.len() > 1 {
+                for productioni in productions.1.iter() {
+                    for productionj in productions.1.iter() {
+                        if productioni.eq(productionj) {
+                            continue;
+                        }
+                        let intersection: HashSet<Symbol> = self.select_set_map.get(productionj).unwrap()
+                            .intersection(self.select_set_map.get(productioni).unwrap())
+                            .cloned().collect();
+                        if intersection.len() > 0 {
+                            intersection_set.insert(productions.0.clone());
+                        }
+                    }
+                }
             }
         }
-        true
+        if intersection_set.is_empty() {
+            Ok(true)
+        } else {
+            Err(intersection_set)
+        }
     }
 
     pub fn build_analyze_table(&mut self) -> HashMap<(Symbol, Symbol), Production> {
@@ -235,7 +249,7 @@ impl Syntax {
 }
 
 impl Syntax {
-    fn verbose(&self) {
+    fn verbose_first(&self) {
         for sym in self.first_set_map.iter() {
             print!("{} First: ", sym.0);
             for sym1 in sym.1.iter() {
@@ -243,7 +257,8 @@ impl Syntax {
             }
             print!("\n");
         }
-
+    }
+    fn verbose_follow(&self) {
         for sym in self.follow_set_map.iter() {
             print!("{} Follow: ", sym.0);
             for sym1 in sym.1.iter() {
@@ -251,9 +266,11 @@ impl Syntax {
             }
             print!("\n");
         }
+    }
 
+    fn verbose_select(&self) {
         for sym in self.select_set_map.iter() {
-            print!("Production {} -> : ", sym.0.head);
+            print!("Production {} -> ", sym.0.head);
             for sym1 in sym.0.vec.iter() {
                 print!("{} ", sym1);
             }
@@ -263,5 +280,10 @@ impl Syntax {
             }
             print!("\n");
         }
+    }
+    fn verbose(&self) {
+        self.verbose_first();
+        self.verbose_follow();
+        self.verbose_select();
     }
 }

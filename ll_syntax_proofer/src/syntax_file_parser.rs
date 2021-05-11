@@ -15,10 +15,14 @@ impl SyntaxParser {
     }
 
     pub fn add_syntax_line(&mut self, line: String) {
-        let vec = line.split("->")
+        let vec = line.split("=>")
             .map(|str| {
                 str.trim()
             }).collect::<Vec<&str>>();
+
+        if vec.len() != 2 {
+            return;
+        }
 
         self.symbols.insert(Symbol::from(vec[0]));
 
