@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use crate::symbol::{Production, Symbol};
 use crate::util::calc_set_map_len;
+use std::process::exit;
 
 #[derive(Clone)]
 pub struct Syntax {
@@ -10,7 +11,6 @@ pub struct Syntax {
     pub first_set_map: HashMap<Symbol, HashSet<Symbol>>,
     pub follow_set_map: HashMap<Symbol, HashSet<Symbol>>,
     pub select_set_map: HashMap<Production, HashSet<Symbol>>,
-    pub empty_symbol: Symbol,
     pub eof_symbol: Symbol,
     pub is_generated: bool,
 }
@@ -21,9 +21,7 @@ impl Syntax {
         generators: &HashMap<Symbol, HashSet<Production>>,
     ) -> Syntax {
         let mut extend_symbols = symbols.clone();
-        let init_empty_symbol = Symbol::from("eps");
         let init_eof_symbol = Symbol::from("eof");
-        extend_symbols.insert(init_empty_symbol.clone());
         extend_symbols.insert(init_eof_symbol.clone());
         Syntax {
             symbols: extend_symbols.clone(),
@@ -54,7 +52,6 @@ impl Syntax {
                 }
                 init_select_set_map
             },
-            empty_symbol: init_empty_symbol,
             eof_symbol: init_eof_symbol,
             is_generated: false,
         }
@@ -63,11 +60,12 @@ impl Syntax {
 
 impl Syntax {
     fn calc_empty_set(&mut self) {
+        self.nullable_set.insert(Symbol::empty_symbol());
         loop {
             let size = self.nullable_set.len();
             for productions in self.generators.iter() {
                 for production in productions.1.iter() {
-                    if production.is_empty_production(&self.empty_symbol) {
+                    if production.is_empty_production() {
                         self.nullable_set.insert(productions.0.clone());
                     } else {
                         let mut all_is_empty = true;
@@ -93,7 +91,7 @@ impl Syntax {
 impl Syntax {
     fn calc_first_set(&mut self) {
         for symbol in self.symbols.iter() {
-            if symbol.is_end_symbol() {
+            if symbol.is_end_symbol() || symbol.is_empty_symbol() {
                 self.first_set_map.get_mut(symbol).unwrap().insert(symbol.clone());
             }
         }
@@ -139,16 +137,17 @@ impl Syntax {
                             suffix_follow_set.clear();
                             suffix_follow_set.insert(symbol.clone());
                             continue;
+                        } else if symbol.is_not_end_symbol() {
+                            let cur_follow_set = self.follow_set_map.get_mut(symbol)
+                                .unwrap();
+                            *cur_follow_set = cur_follow_set.union(&suffix_follow_set).cloned().collect();
+                            let cur_first_set = self.first_set_map.get(symbol).unwrap();
+                            if !self.nullable_set.contains(symbol) {
+                                suffix_follow_set = cur_first_set.clone();
+                            } else {
+                                suffix_follow_set = suffix_follow_set.union(cur_first_set).cloned().collect();
+                            }
                         }
-                        let cur_follow_set = self.follow_set_map.get_mut(symbol)
-                            .unwrap();
-                        *cur_follow_set = cur_follow_set.union(&suffix_follow_set).cloned().collect();
-                        let cur_first_set = self.first_set_map.get(symbol).unwrap();
-                        if !self.nullable_set.contains(symbol) {
-                            suffix_follow_set = cur_first_set.clone();
-                            continue;
-                        }
-                        suffix_follow_set = suffix_follow_set.union(cur_first_set).cloned().collect();
                     }
                 }
             }
@@ -157,7 +156,7 @@ impl Syntax {
             }
         }
         for set in self.follow_set_map.iter_mut() {
-            set.1.remove(&self.empty_symbol);
+            set.1.remove(&Symbol::empty_symbol());
         }
     }
 }
@@ -185,6 +184,7 @@ impl Syntax {
                     *select_set = select_set.union(self.follow_set_map.get(&production.head).unwrap())
                         .cloned().collect();
                 }
+                select_set.remove(&Symbol::empty_symbol());
             }
         }
     }
@@ -202,15 +202,16 @@ impl Syntax {
         if !self.is_generated {
             self.generate_sets();
         }
+        self.verbose();
 
         for productions in self.generators.iter() {
             let mut intersection = self.symbols.clone();
             for production in productions.1.iter() {
-                intersection = intersection.union(self.select_set_map.get(production).unwrap())
+                intersection = intersection.intersection(self.select_set_map.get(production).unwrap())
                     .cloned().collect();
             }
             if intersection.len() > 0 {
-                false;
+                return false;
             }
         }
         true
@@ -230,5 +231,37 @@ impl Syntax {
             }
         }
         trans_map
+    }
+}
+
+impl Syntax {
+    fn verbose(&self) {
+        for sym in self.first_set_map.iter() {
+            print!("{} First: ", sym.0);
+            for sym1 in sym.1.iter() {
+                print!("{} ", sym1);
+            }
+            print!("\n");
+        }
+
+        for sym in self.follow_set_map.iter() {
+            print!("{} Follow: ", sym.0);
+            for sym1 in sym.1.iter() {
+                print!("{} ", sym1);
+            }
+            print!("\n");
+        }
+
+        for sym in self.select_set_map.iter() {
+            print!("Production {} -> : ", sym.0.head);
+            for sym1 in sym.0.vec.iter() {
+                print!("{} ", sym1);
+            }
+            print!("\n");
+            for sym1 in sym.1.iter() {
+                print!("{} ", sym1);
+            }
+            print!("\n");
+        }
     }
 }

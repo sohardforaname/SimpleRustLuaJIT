@@ -39,11 +39,25 @@ impl Lexer {
         self.cur_column = 1;
     }
 
+    fn take_word<F>(&mut self, filter: F) -> String
+        where F: Fn(&char) -> bool {
+        let mut res: String = String::new();
+        while if let Some(ch) = self.char_iter.peek() {
+            filter(ch)
+        } else {
+            false
+        } {
+            res.push(self.char_iter.next().unwrap());
+        }
+        res
+    }
+
     fn parse_id(&mut self) -> (TokenType, String) {
         let char_filter = |ch: &char| {
             ch.is_alphanumeric() || *ch == '_'
         };
-        let id_str: String = self.char_iter.by_ref().take_while(char_filter).collect();
+        //let id_str: String = self.char_iter.by_ref().take_while(char_filter).collect();
+        let id_str = self.take_word(char_filter);
 
         self.iter_advance(id_str.len());
         match self.key_word_hash_map.get(&id_str) {
@@ -56,8 +70,7 @@ impl Lexer {
         let num_filter = |ch: &char| {
             ch.is_alphanumeric() || *ch == '.' || *ch == '_'
         };
-        let num_str: String = self.char_iter.clone().take_while(num_filter).collect();
-        self.char_iter.by_ref().take(num_str.len()).count();
+        let num_str: String = self.take_word(num_filter);
 
         self.iter_advance(num_str.len());
         (TokenType::Number(num_str.parse::<f64>().unwrap_or_else(|_| {
@@ -70,7 +83,7 @@ impl Lexer {
             *ch != '"'
         };
         self.char_iter.next();
-        let str: String = self.char_iter.by_ref().take_while(str_filter).collect();
+        let str: String = self.take_word(str_filter);
 
         self.char_iter.next();
         self.iter_advance(str.len() + 2);
@@ -99,6 +112,7 @@ impl Lexer {
         } {
             self.char_iter.next();
         }
+        self.char_iter.next();
         self.iter_new_line();
     }
 

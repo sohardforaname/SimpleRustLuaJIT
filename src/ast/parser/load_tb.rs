@@ -8,7 +8,6 @@ use std::path::Path;
 
 pub struct AnalyzeTable {
     pub analyze_table: HashMap<(Symbol, Symbol), Production>,
-    pub empty_symbol: Symbol,
 }
 
 impl AnalyzeTable {
@@ -25,7 +24,6 @@ impl AnalyzeTable {
         }
         AnalyzeTable {
             analyze_table: syntax.build_analyze_table(),
-            empty_symbol: syntax.empty_symbol
         }
     }
 }

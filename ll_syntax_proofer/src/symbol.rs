@@ -12,16 +12,29 @@ impl Symbol {
     }
 
     pub fn is_end_symbol(&self) -> bool {
-        let sym_char_vec: Vec<char> = self.text.chars().collect();
-        !sym_char_vec[0].is_uppercase()
+        if self.is_empty_symbol() {
+            false
+        } else {
+            let sym_char_vec: Vec<char> = self.text.chars().collect();
+            sym_char_vec[0].is_lowercase()
+        }
     }
 
     pub fn is_not_end_symbol(&self) -> bool {
-        !self.is_end_symbol()
+        let sym_char_vec: Vec<char> = self.text.chars().collect();
+        sym_char_vec[0].is_uppercase()
     }
 
-    pub fn is_empty_symbol(&self, empty_symbol: &Symbol) -> bool {
-        self.eq(&empty_symbol)
+    pub fn is_empty_symbol(&self) -> bool {
+        self.eq(&Symbol::empty_symbol())
+    }
+
+    pub fn empty_symbol() -> Symbol {
+        Symbol { text: "ε".to_string() }
+    }
+
+    pub fn eof_symbol() -> Symbol {
+        Symbol { text: "eof".to_string() }
     }
 }
 
@@ -78,8 +91,8 @@ impl Production {
         true
     }
 
-    pub fn is_empty_production(&self, end_symbol: &Symbol) -> bool {
-        self.vec.len() == 1 && self.vec[0].eq(end_symbol)
+    pub fn is_empty_production(&self) -> bool {
+        self.vec.len() == 1 && self.vec[0].eq(&Symbol::empty_symbol())
     }
 }
 

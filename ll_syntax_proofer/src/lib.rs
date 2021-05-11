@@ -20,13 +20,7 @@ mod tests {
         }
         let mut syntax = Syntax::new(&parser.symbols, &parser.generators);
         println!("the grammar's ll(1) checker result: {}", syntax.check_if_ll());
-        for symbol in syntax.first_set_map.iter() {
-            println!("Symbol: {} First: ", symbol.0);
-            for sym in symbol.1.iter() {
-                print!("{} ", sym);
-            }
-            print!("\n");
-        }
+
         let table = syntax.build_analyze_table();
     }
 }
