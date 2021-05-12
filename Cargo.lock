@@ -3,10 +3,3 @@
 [[package]]
 name = "RustLuac"
 version = "0.1.0"
-dependencies = [
- "ll_syntax_proofer",
-]
-
-[[package]]
-name = "ll_syntax_proofer"
-version = "0.1.0"

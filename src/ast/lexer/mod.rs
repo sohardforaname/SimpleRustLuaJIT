@@ -142,28 +142,23 @@ impl Lexer {
                     token_info = self.parse_id();
                 } else if *val == '"' {
                     token_info = self.parse_str();
-                } else if *val == '\n' {
-                    while if let Some(ch) = self.char_iter.peek() {
-                        (|ch: &char| {
-                            *ch == '\n'
-                        })(ch)
-                    } else {
-                        false
-                    } {
+                } else if !val.is_ascii_graphic() {
+                    loop {
+                        match self.char_iter.peek() {
+                            Some(ch) => {
+                                if *ch == '\n' {
+                                    self.iter_new_line();
+                                } else if ch.is_ascii_graphic().not() {
+                                    self.iter_advance(1);
+                                } else {
+                                    break;
+                                }
+                            }
+                            None => {
+                                break;
+                            }
+                        }
                         self.char_iter.next();
-                        self.iter_new_line();
-                    }
-                    return self.get_next_token();
-                } else if *val == ' ' || *val == '\t' {
-                    while if let Some(ch) = self.char_iter.peek() {
-                        (|ch: &char| {
-                            ch.is_ascii_graphic().not()
-                        })(ch)
-                    } else {
-                        false
-                    } {
-                        self.char_iter.next();
-                        self.iter_advance(1);
                     }
                     return self.get_next_token();
                 } else if *val == '-' {

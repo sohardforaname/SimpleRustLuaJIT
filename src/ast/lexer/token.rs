@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use crate::string_hash_map;
 use std::fmt::{Display, Formatter, Result, Debug};
-use ll_syntax_proofer::symbol::Symbol;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Hash)]
@@ -10,6 +9,9 @@ pub enum KeyWord {
     SUB,
     MUL,
     DIV,
+    FDIV,
+    LSH,
+    RSH,
     MOD,
     POW,
     ASS,
@@ -34,6 +36,8 @@ pub enum KeyWord {
     RLA,
     COM,
     SEM,
+    COL,
+    PATH,
 
     BRK,
     DO,
@@ -62,6 +66,9 @@ impl KeyWord {
             KeyWord::SUB |
             KeyWord::MUL |
             KeyWord::DIV |
+            KeyWord::FDIV |
+            KeyWord::LSH |
+            KeyWord::RSH |
             KeyWord::MOD |
             KeyWord::POW |
             KeyWord::ASS |
@@ -96,7 +103,8 @@ impl KeyWord {
             KeyWord::LMI |
             KeyWord::RMI |
             KeyWord::LLA |
-            KeyWord::RLA => true,
+            KeyWord::RLA |
+            KeyWord::PATH => true,
             _ => false
         }
     }
@@ -107,6 +115,9 @@ impl KeyWord {
             KeyWord::SUB => "-",
             KeyWord::MUL => "*",
             KeyWord::DIV => "/",
+            KeyWord::FDIV => "//",
+            KeyWord::LSH => "<<",
+            KeyWord::RSH => ">>",
             KeyWord::MOD => "%",
             KeyWord::POW => "^",
             KeyWord::ASS => "=",
@@ -131,6 +142,8 @@ impl KeyWord {
             KeyWord::RLA => "}",
             KeyWord::COM => ",",
             KeyWord::SEM => ";",
+            KeyWord::COL => ":",
+            KeyWord::PATH => "::",
 
             KeyWord::BRK => "break",
             KeyWord::DO => "do",
@@ -233,9 +246,6 @@ impl Token {
         }
     }
 
-    pub fn to_symbol(&self) -> Symbol {
-        Symbol { text: self.type_id.to_str().to_string() }
-    }
 
     pub fn eof() -> Token {
         Token {
@@ -259,13 +269,6 @@ impl PartialEq<Token> for Token {
     }
 }
 
-
-impl PartialEq<Symbol> for Token {
-    fn eq(&self, symbol: &Symbol) -> bool {
-        self.type_id.to_str().eq(&symbol.text)
-    }
-}
-
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "Token: {{type: {}, raw: {}, line: {}, column: {}}}",
@@ -279,6 +282,9 @@ pub fn get_opt_map() -> HashMap<String, KeyWord> {
         "-"     =>  KeyWord::SUB,
         "*"     =>  KeyWord::MUL,
         "/"     =>  KeyWord::DIV,
+        "//"    =>  KeyWord::FDIV,
+        "<<"    =>  KeyWord::LSH,
+        ">>"    =>  KeyWord::RSH,
         "%"     =>  KeyWord::MOD,
         "^"     =>  KeyWord::POW,
         "="     =>  KeyWord::ASS,
@@ -302,7 +308,9 @@ pub fn get_opt_map() -> HashMap<String, KeyWord> {
         "{"     =>  KeyWord::LLA,
         "}"     =>  KeyWord::RLA,
         ","     =>  KeyWord::COM,
-        ";"     =>  KeyWord::SEM
+        ";"     =>  KeyWord::SEM,
+        ":"     =>  KeyWord::COL,
+        "::"    =>  KeyWord::PATH
     ]
 }
 
