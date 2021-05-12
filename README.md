@@ -1,2 +1,2 @@
 # SimpleRustLuaJIT
-A simple lua jit implements in Rust for HUST-Complier principle course.
+A simple lua jit implemented in Rust for HUST-Complier principle course.
