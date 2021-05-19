@@ -57,6 +57,7 @@ pub enum KeyWord {
     TRU,
     UNT,
     WHI,
+    GOT,
 }
 
 impl KeyWord {
@@ -163,6 +164,7 @@ impl KeyWord {
             KeyWord::TRU => "true",
             KeyWord::UNT => "until",
             KeyWord::WHI => "while",
+            KeyWord::GOT => "goto",
         }
     }
 }
@@ -174,7 +176,7 @@ impl PartialEq<KeyWord> for KeyWord {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TokenType {
     OptKeyWord(KeyWord),
     ID(String),
@@ -201,6 +203,20 @@ impl TokenType {
     }
 }
 
+impl PartialEq<TokenType> for TokenType {
+    fn eq(&self, rhs: &TokenType) -> bool {
+        match (self, rhs) {
+            (TokenType::OptKeyWord(key_word1), TokenType::OptKeyWord(key_word2)) =>
+                key_word1.eq(key_word2),
+            (TokenType::EOF, TokenType::EOF) |
+            (TokenType::ID(_), TokenType::ID(_)) |
+            (TokenType::String(_), TokenType::String(_)) |
+            (TokenType::Number(_), TokenType::Number(_)) => true,
+            _ => false
+        }
+    }
+}
+
 impl Display for TokenType {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", self.to_str())
@@ -213,7 +229,7 @@ impl From<TokenType> for String {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub type_id: TokenType,
     pub raw_data: String,
@@ -333,6 +349,7 @@ pub fn get_key_word_map() -> HashMap<String, KeyWord> {
         "then"      =>  KeyWord::THE,
         "true"      =>  KeyWord::TRU,
         "until"     =>  KeyWord::UNT,
-        "while"     =>  KeyWord::WHI
+        "while"     =>  KeyWord::WHI,
+        "goto"      =>  KeyWord::GOT
     ]
 }

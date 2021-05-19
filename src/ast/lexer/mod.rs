@@ -15,6 +15,8 @@ pub struct Lexer {
     cur_line: usize,
     cur_column: usize,
     eof: bool,
+    cur_token: Option<Token>,
+    next_token: Option<Token>,
 }
 
 impl Lexer {
@@ -27,6 +29,8 @@ impl Lexer {
             cur_line: 1,
             cur_column: 1,
             eof: false,
+            cur_token: None,
+            next_token: None,
         }
     }
 
@@ -129,7 +133,7 @@ impl Lexer {
     }
 
 
-    pub fn get_next_token(&mut self) -> Option<Token> {
+    fn get_next_token(&mut self) -> Option<Token> {
         match self.char_iter.peek() {
             Some(val) => {
                 let token_info: (TokenType, String);
@@ -177,6 +181,21 @@ impl Lexer {
                 }
             }
         }
+    }
+}
+
+impl Lexer {
+    pub fn peek_token_type(&mut self) -> TokenType {
+        if self.next_token.is_none() {
+            self.next_token = self.get_next_token();
+        }
+        self.next_token.unwrap().type_id
+    }
+
+    pub fn next_token(&mut self) -> Option<Token> {
+        let ret_token = self.next_token.clone();
+        self.next_token = self.get_next_token();
+        ret_token
     }
 }
 

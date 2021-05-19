@@ -1,5 +1,6 @@
 mod ast;
 mod util;
+mod codegen;
 
 use ast::lexer::Lexer;
 use crate::ast::parser::Parser;
@@ -19,7 +20,10 @@ fn main() {
     file.read_to_string(&mut code);
 
     let mut lexer = Lexer::new(&code);
-    for token in lexer {
-        println!("{}", token);
-    }
+    println!("{}", lexer.peek_token().as_ref().unwrap());
+    println!("{}", lexer.peek_token().as_ref().unwrap());
+    println!("{}", lexer.next_token().unwrap());
+    println!("{}", lexer.peek_token().as_ref().unwrap());
+    println!("{}", lexer.peek_token().as_ref().unwrap());
+    println!("{}", lexer.next_token().unwrap());
 }
